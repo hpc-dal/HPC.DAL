@@ -130,7 +130,7 @@ namespace HPC.DAL.Core.Helper
             ui.IsDbSet = true;
 
             //
-            if(ui.Crud== CrudEnum.SQL)
+            if (ui.Crud == CrudEnum.SQL)
             {
                 DC.PH.GetParamInfo(ui, ui.CsType);
                 return;
@@ -217,6 +217,28 @@ namespace HPC.DAL.Core.Helper
 
             //
             return ds;
+        }
+        private string GetCol(Type t, string prop)
+        {
+            //
+            if(t==null)
+            {
+                return prop;
+            }
+
+            //
+            var tb = DC.XC.GetTableModel(DC.XC.GetModelKey(t.FullName));
+
+            //
+            var pc = tb?.PCAs?.FirstOrDefault(it => prop.Equals(it.PropName, StringComparison.OrdinalIgnoreCase));
+            if (pc != null)
+            {
+                return pc.ColName;
+            }
+            else
+            {
+                return prop;
+            }
         }
 
         /*******************************************************************************************************/
@@ -314,7 +336,7 @@ namespace HPC.DAL.Core.Helper
             var dic = SetDicBase(DC);
             dic.TbMType = cp.TbMType;
             dic.TbMProp = cp.Prop;
-            dic.TbCol = cp.Key;
+            dic.TbCol = GetCol(cp.TbMType, cp.Key);  // cp.Key;
             dic.TbAlias = cp.Alias;
             dic.Param = cp.Key;
             dic.ParamRaw = cp.Key;
@@ -330,7 +352,7 @@ namespace HPC.DAL.Core.Helper
             var dic = SetDicBase(DC);
             dic.TbMType = cp.TbMType;
             dic.TbMProp = cp.Prop;
-            dic.TbCol = cp.Key;
+            dic.TbCol = GetCol(cp.TbMType, cp.Key);  // cp.Key;
             dic.TbAlias = cp.Alias;
             dic.Param = cp.Key;
             dic.ParamRaw = cp.Key;
@@ -346,7 +368,7 @@ namespace HPC.DAL.Core.Helper
             var dic = SetDicBase(DC);
             dic.TbMType = cp.TbMType;
             dic.TbMProp = cp.Prop;
-            dic.TbCol = cp.Key;
+            dic.TbCol = GetCol(cp.TbMType, cp.Key);  // cp.Key;
             dic.TbColAlias = cp.Key;
             dic.TbAlias = cp.Alias;
             dic.Param = cp.Key;
@@ -364,7 +386,7 @@ namespace HPC.DAL.Core.Helper
             var dic = SetDicBase(DC);
             dic.TbMType = cp.TbMType;
             dic.TbMProp = cp.Prop;
-            dic.TbCol = cp.Key;
+            dic.TbCol = GetCol(cp.TbMType, cp.Key);  // cp.Key;
             dic.TbAlias = cp.Alias;
             dic.CsValue = v?.Val;
             dic.CsValueStr = v?.ValStr;
@@ -380,22 +402,7 @@ namespace HPC.DAL.Core.Helper
             var dic = SetDicBase(DC);
             dic.TbMType = cp.TbMType;
             dic.TbMProp = cp.Prop;
-            dic.TbCol = cp.Key;
-            dic.TbAlias = cp.Alias;
-            dic.CsValue = v?.Val;
-            dic.CsValueStr = v?.ValStr;
-            dic.CsType = cp.ValType;
-            dic.Param = cp.Key;
-            dic.ParamRaw = cp.Key;
-
-            return dic;
-        }
-        internal DicParam NotInDic(ColumnParam cp, ValueInfo v)
-        {
-            var dic = SetDicBase(DC);
-            dic.TbMType = cp.TbMType;
-            dic.TbMProp = cp.Prop;
-            dic.TbCol = cp.Key;
+            dic.TbCol = GetCol(cp.TbMType, cp.Key);  // cp.Key;
             dic.TbAlias = cp.Alias;
             dic.CsValue = v?.Val;
             dic.CsValueStr = v?.ValStr;
@@ -411,7 +418,7 @@ namespace HPC.DAL.Core.Helper
             var dic = SetDicBase(DC);
             dic.TbMType = cp.TbMType;
             dic.TbMProp = cp.Prop;
-            dic.TbCol = cp.Key;
+            dic.TbCol = GetCol(cp.TbMType, cp.Key);  // cp.Key;
             dic.TbAlias = cp.Alias;
             dic.CsValue = v?.Val;
             dic.CsValueStr = v?.ValStr;
@@ -440,7 +447,7 @@ namespace HPC.DAL.Core.Helper
             var dic = SetDicBase(DC);
             dic.TbMType = cp.TbMType;
             dic.TbMProp = cp.Prop;
-            dic.TbCol = cp.Key;
+            dic.TbCol = GetCol(cp.TbMType, cp.Key);  // cp.Key;
             dic.TbAlias = cp.Alias;
             dic.Param = cp.Key;
             dic.ParamRaw = cp.Key;
@@ -459,7 +466,7 @@ namespace HPC.DAL.Core.Helper
             dic.TbMType = cp.TbMType;
             dic.TbAlias = cp.Alias;
             dic.TbMProp = cp.Prop;
-            dic.TbCol = cp.Key;
+            dic.TbCol = GetCol(cp.TbMType, cp.Key);  // cp.Key;
             dic.TbColAlias = colAlias;
 
             return dic;
@@ -477,18 +484,7 @@ namespace HPC.DAL.Core.Helper
             var dic = SetDicBase(DC);
             dic.TbMType = mType;
             dic.TbAlias = alias;
-            dic.TbCol = key;
-            dic.Param = key;
-            dic.ParamRaw = key;
-
-            return dic;
-        }
-        internal DicParam SumDic(Type mType, string key, string alias = "")
-        {
-            var dic = SetDicBase(DC);
-            dic.TbMType = mType;
-            dic.TbAlias = alias;
-            dic.TbCol = key;
+            dic.TbCol = GetCol(mType, key);  // key;
             dic.Param = key;
             dic.ParamRaw = key;
 
@@ -499,7 +495,7 @@ namespace HPC.DAL.Core.Helper
         {
             var dic = SetDicBase(DC);
             dic.TbMType = mType;
-            dic.TbCol = key;
+            dic.TbCol = GetCol(mType, key);  // key;
             dic.TbAlias = alias;
 
             return dic;
@@ -519,7 +515,7 @@ namespace HPC.DAL.Core.Helper
         {
             var dic = SetDicBase(DC);
             dic.TbMType = mType;
-            dic.TbCol = key;
+            dic.TbCol = GetCol(mType, key); //key;
             dic.Param = key;
             dic.ParamRaw = key;
             dic.CsValue = v?.Val;
@@ -535,7 +531,7 @@ namespace HPC.DAL.Core.Helper
         {
             var dic = SetDicBase(DC);
             dic.TbMType = mType;
-            dic.TbCol = key;
+            dic.TbCol = GetCol(mType, key); // key;
             dic.Param = param;
             dic.ParamRaw = param;
             dic.CsValue = v?.Val;
@@ -574,7 +570,7 @@ namespace HPC.DAL.Core.Helper
             var dic = SetDicBase(DC);
             dic.TbMType = cp.TbMType;
             dic.TbAlias = cp.Alias;
-            dic.TbCol = cp.Key;
+            dic.TbCol = GetCol(cp.TbMType, cp.Key);  // cp.Key;
             dic.Param = cp.Key;
             dic.ParamRaw = cp.Key;
             dic.TbMProp = cp.Prop;
@@ -586,7 +582,7 @@ namespace HPC.DAL.Core.Helper
             var dic = SetDicBase(DC);
             dic.TbMType = mType;
             dic.TbMProp = prop;
-            dic.TbCol = columnOne;
+            dic.TbCol = GetCol(mType, columnOne);  // columnOne;
             dic.TbAlias = tableAliasOne;
 
             return dic;
@@ -598,7 +594,7 @@ namespace HPC.DAL.Core.Helper
             dic.TbMType = mType;
             dic.TbAlias = alias;
             dic.TbMProp = prop;
-            dic.TbCol = key;
+            dic.TbCol = GetCol(mType, key);  // key;
             return dic;
         }
 
@@ -611,7 +607,7 @@ namespace HPC.DAL.Core.Helper
             dic.GroupAction = action;
             return dic;
         }
-        
+
         internal DicParam SelectColumnDic(List<DicParam> cols)
         {
             var dic = SetDicBase(DC);
