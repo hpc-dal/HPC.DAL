@@ -1,6 +1,11 @@
 ﻿using HPC.DAL.Core.Bases;
+using HPC.DAL.Core.Bases.Facades;
 using HPC.DAL.Impls;
+using HPC.DAL.Impls.ImplAsyncs;
+using HPC.DAL.Impls.ImplSyncs;
 using HPC.DAL.Interfaces;
+using HPC.DAL.Interfaces.IAsyncs;
+using HPC.DAL.Interfaces.ISyncs;
 using HPC.DAL.Interfaces.Segments;
 using System;
 using System.Collections.Generic;
@@ -14,7 +19,7 @@ namespace HPC.DAL.UserFacade.Query
     /// 请参阅: <see langword="目录索引 https://www.cnblogs.com/Meng-NET/"/>
     /// </summary>
     public sealed class WhereQ<M>
-        : Operator
+        : WhereBase
         , IOrderByQ<M>
         , IQueryOneAsync<M>, IQueryOne<M>
         , IQueryListAsync<M>, IQueryList<M>
@@ -26,7 +31,8 @@ namespace HPC.DAL.UserFacade.Query
         where M : class
     {
         internal WhereQ(Context dc)
-            : base(dc) { }
+            : base(dc)
+        { }
 
         public OrderByQ<M> OrderBySegment
         {

@@ -3,6 +3,8 @@ using HPC.DAL.AdoNet.Bases;
 using HPC.DAL.Core;
 using HPC.DAL.Core.Enums;
 using HPC.DAL.Impls;
+using HPC.DAL.Impls.ImplAsyncs;
+using HPC.DAL.Impls.ImplSyncs;
 using HPC.DAL.UserFacade.Create;
 using HPC.DAL.UserFacade.Delete;
 using HPC.DAL.UserFacade.Join;
@@ -414,14 +416,14 @@ namespace HPC.DAL
             where M : class, new()
             where F : struct
         {
-            return conn.Queryer<M>().Where(compareFunc).Sum(propertyFunc,tran);
+            return conn.Queryer<M>().Where(compareFunc).Sum(propertyFunc, tran);
         }
         public static Nullable<F> Sum<M, F>
             (this IDbConnection conn, Expression<Func<M, bool>> compareFunc, Expression<Func<M, Nullable<F>>> propertyFunc, IDbTransaction tran = null)
             where M : class, new()
             where F : struct
         {
-            return conn.Queryer<M>().Where(compareFunc).Sum(propertyFunc,tran);
+            return conn.Queryer<M>().Where(compareFunc).Sum(propertyFunc, tran);
         }
 
         /******************************************************************************************************************************/
@@ -538,9 +540,10 @@ namespace HPC.DAL
         /// <summary>
         /// Sql 调试跟踪 开启
         /// </summary>
-        public static IDbConnection OpenDebug(this IDbConnection conn)
+        public static IDbConnection OpenDebug(this IDbConnection conn, DebugEnum type = DebugEnum.Debug)
         {
             XConfig.IsDebug = true;
+            XConfig.DebugType = type;
             return conn;
         }
 
