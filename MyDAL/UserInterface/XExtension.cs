@@ -1,10 +1,9 @@
 ﻿using HPC.DAL.AdoNet;
-using HPC.DAL.AdoNet.Bases;
 using HPC.DAL.Core;
 using HPC.DAL.Core.Enums;
-using HPC.DAL.Impls;
 using HPC.DAL.Impls.ImplAsyncs;
 using HPC.DAL.Impls.ImplSyncs;
+using HPC.DAL.ModelTools;
 using HPC.DAL.UserFacade.Create;
 using HPC.DAL.UserFacade.Delete;
 using HPC.DAL.UserFacade.Join;
@@ -23,8 +22,9 @@ namespace HPC.DAL
     /// </summary>
     public static class XExtension
     {
+        #region Internal
         /* 内部方法 */
-        internal static Creater<M> Creater<M>(this IDbConnection conn)
+        private static Creater<M> Creater<M>(this IDbConnection conn)
             where M : class, new()
         {
             var dc = new XContext<M>(conn)
@@ -33,9 +33,94 @@ namespace HPC.DAL
             };
             return new Creater<M>(dc);
         }
+        private static void CheckCreate(string sql)
+        {
+            if (sql.IsNullStr())
+            {
+                throw new Exception("Create SQL 语句不能为空！");
+            }
+            if (!sql.Contains("insert")
+                && !sql.Contains("INSERT")
+                && !sql.Contains("Insert"))
+            {
+                throw new Exception("Create API 只能用来新增数据！");
+            }
+        }
+        private static void CheckDelete(string sql)
+        {
+            if (sql.IsNullStr())
+            {
+                throw new Exception("Delete SQL 语句不能为空！");
+            }
+            if (!sql.Contains("delete")
+                && !sql.Contains("DELETE")
+                && !sql.Contains("Delete"))
+            {
+                throw new Exception("Delete API 只能用来删除数据！");
+            }
+        }
+        [Obsolete("警告：此 API 后面会移除！！！", false)]
+        public static async Task<int> ExecuteNonQueryAsync(this IDbConnection conn, string sql, List<XParam> dbParas = null, IDbTransaction tran = null)
+        {
+            var dc = new XContext(conn)
+            {
+                Crud = CrudEnum.SQL
+            };
+            dc.ParseSQL(sql);
+            dc.ParseParam(dbParas);
+            return await new ExecuteNonQuerySQLAsyncImpl(dc).ExecuteNonQueryAsync(tran);
+        }
+        [Obsolete("警告：此 API 后面会移除！！！", false)]
+        public static int ExecuteNonQuery(this IDbConnection conn, string sql, List<XParam> dbParas = null, IDbTransaction tran = null)
+        {
+            var dc = new XContext(conn)
+            {
+                Crud = CrudEnum.SQL
+            };
+            dc.ParseSQL(sql);
+            dc.ParseParam(dbParas);
+            return new ExecuteNonQuerySQLImpl(dc).ExecuteNonQuery(tran);
+        }
 
-        /******************************************************************************************************************************/
+        /*-------------------------------------------------------------*/
 
+        [Obsolete("警告：此 API 后面会移除！！！", false)]
+        public static async Task<PagingResult<T>> QueryPagingAsync<T>
+            (this IDbConnection conn, PagingResult<T> paging, string totalCountSql, string pageDataSql, List<XParam> dbParas = null, IDbTransaction tran = null)
+        {
+            var dc = new XContext(conn)
+            {
+                Crud = CrudEnum.SQL
+            };
+            dc.PageIndex = paging.PageIndex;
+            dc.PageSize = paging.PageSize;
+            dc.ParseSQL(totalCountSql, pageDataSql);
+            dc.ParseParam(dbParas);
+            var result = await new QueryPagingSQLAsyncImpl(dc).QueryPagingAsync<T>(tran);
+            paging.TotalCount = result.TotalCount;
+            paging.Data = result.Data;
+            return paging;
+        }
+        [Obsolete("警告：此 API 后面会移除！！！", false)]
+        public static PagingResult<T> QueryPaging<T>
+            (this IDbConnection conn, PagingResult<T> paging, string totalCountSql, string pageDataSql, List<XParam> dbParas = null, IDbTransaction tran = null)
+        {
+            var dc = new XContext(conn)
+            {
+                Crud = CrudEnum.SQL
+            };
+            dc.PageIndex = paging.PageIndex;
+            dc.PageSize = paging.PageSize;
+            dc.ParseSQL(totalCountSql, pageDataSql);
+            dc.ParseParam(dbParas);
+            var result = new QueryPagingSQLImpl(dc).QueryPaging<T>(tran);
+            paging.TotalCount = result.TotalCount;
+            paging.Data = result.Data;
+            return paging;
+        }
+        #endregion
+
+        #region Deleter
         /// <summary>
         /// 删除数据 方法簇
         /// </summary>
@@ -49,6 +134,9 @@ namespace HPC.DAL
             };
             return new Deleter<M>(dc);
         }
+        #endregion
+
+        #region Updater
         /// <summary>
         /// 修改数据 方法簇
         /// </summary>
@@ -62,9 +150,9 @@ namespace HPC.DAL
             };
             return new Updater<M>(dc);
         }
+        #endregion
 
-        /******************************************************************************************************************************/
-
+        #region Queryer
         /// <summary>
         /// 单表查询 方法簇
         /// </summary>
@@ -78,6 +166,9 @@ namespace HPC.DAL
             };
             return new Queryer<M1>(dc);
         }
+
+        /*-------------------------------------------------------------*/
+
         /// <summary>
         /// 连接查询 方法簇
         /// </summary>
@@ -173,9 +264,9 @@ namespace HPC.DAL
             };
             return new Queryer(dc);
         }
+        #endregion
 
-        /******************************************************************************************************************************/
-
+        #region Create API
         /// <summary>
         /// Creater 便捷 CreateAsync 方法
         /// </summary>
@@ -185,6 +276,35 @@ namespace HPC.DAL
             return await conn.Creater<M>().CreateAsync(m, tran);
         }
 
+        /*-------------------------------------------------------------*/
+
+        public static async Task<int> CreateAsync(this IDbConnection conn, string sql, List<XParam> dbParas = null, IDbTransaction tran = null)
+        {
+            CheckCreate(sql);
+            return await conn.ExecuteNonQueryAsync(sql, dbParas, tran);
+        }
+
+        /*-------------------------------------------------------------*/
+
+        /// <summary>
+        /// Creater 便捷 CreateAsync 方法
+        /// </summary>
+        public static int Create<M>(this IDbConnection conn, M m, IDbTransaction tran = null)
+            where M : class, new()
+        {
+            return conn.Creater<M>().Create(m, tran);
+        }
+
+        /*-------------------------------------------------------------*/
+
+        public static int Create(this IDbConnection conn, string sql, List<XParam> dbParas = null, IDbTransaction tran = null)
+        {
+            CheckCreate(sql);
+            return conn.ExecuteNonQuery(sql, dbParas, tran);
+        }
+        #endregion
+
+        #region CreateBatch API
         /// <summary>
         /// Creater 便捷 CreateBatchAsync 方法
         /// </summary>
@@ -194,6 +314,19 @@ namespace HPC.DAL
             return await conn.Creater<M>().CreateBatchAsync(mList, tran);
         }
 
+        /*-------------------------------------------------------------*/
+
+        /// <summary>
+        /// Creater 便捷 CreateBatchAsync 方法
+        /// </summary>
+        public static int CreateBatch<M>(this IDbConnection conn, IEnumerable<M> mList, IDbTransaction tran = null)
+            where M : class, new()
+        {
+            return conn.Creater<M>().CreateBatch(mList, tran);
+        }
+        #endregion
+
+        #region Delete API
         /// <summary>
         /// Deleter 便捷 DeleteAsync 方法
         /// </summary>
@@ -203,6 +336,35 @@ namespace HPC.DAL
             return await conn.Deleter<M>().Where(compareFunc).DeleteAsync(tran);
         }
 
+        /*-------------------------------------------------------------*/
+
+        public static async Task<int> DeleteAsync(this IDbConnection conn, string sql, List<XParam> dbParas = null, IDbTransaction tran = null)
+        {
+            CheckDelete(sql);
+            return await conn.ExecuteNonQueryAsync(sql, dbParas, tran);
+        }
+
+        /*-------------------------------------------------------------*/
+
+        /// <summary>
+        /// Deleter 便捷 DeleteAsync 方法
+        /// </summary>
+        public static int Delete<M>(this IDbConnection conn, Expression<Func<M, bool>> compareFunc, IDbTransaction tran = null)
+            where M : class, new()
+        {
+            return conn.Deleter<M>().Where(compareFunc).Delete(tran);
+        }
+
+        /*-------------------------------------------------------------*/
+
+        public static int Delete(this IDbConnection conn, string sql, List<XParam> dbParas = null, IDbTransaction tran = null)
+        {
+            CheckDelete(sql);
+            return conn.ExecuteNonQuery(sql, dbParas, tran);
+        }
+        #endregion
+
+        #region Update API
         /// <summary>
         /// 请参阅: <see langword=".UpdateAsync() 使用 https://www.cnblogs.com/Meng-NET/"/>
         /// </summary>
@@ -213,8 +375,20 @@ namespace HPC.DAL
             return await conn.Updater<M>().Set(filedsObject as object).Where(compareFunc).UpdateAsync(tran, set);
         }
 
-        /******************************************************************************************************************************/
+        /*-------------------------------------------------------------*/
 
+        /// <summary>
+        /// Updater 便捷 UpdateAsync update fields 方法
+        /// </summary>
+        public static int Update<M>
+            (this IDbConnection conn, Expression<Func<M, bool>> compareFunc, dynamic filedsObject, IDbTransaction tran = null, SetEnum set = SetEnum.AllowedNull)
+            where M : class, new()
+        {
+            return conn.Updater<M>().Set(filedsObject as object).Where(compareFunc).Update(tran, set);
+        }
+        #endregion
+
+        #region QueryOne API
         /// <summary>
         /// 请参阅: <see langword=".QueryOneAsync() 使用 https://www.cnblogs.com/Meng-NET/"/>
         /// </summary>
@@ -242,105 +416,20 @@ namespace HPC.DAL
             return await conn.Queryer<M>().Where(compareFunc).QueryOneAsync(columnMapFunc, tran);
         }
 
-        /// <summary>
-        /// 请参阅: <see langword=".QueryListAsync() 使用 https://www.cnblogs.com/Meng-NET/"/>
-        /// </summary>
-        public static async Task<List<M>> QueryListAsync<M>(this IDbConnection conn, Expression<Func<M, bool>> compareFunc, IDbTransaction tran = null)
-            where M : class, new()
+        /*-------------------------------------------------------------*/
+
+        public static async Task<T> QueryOneAsync<T>(this IDbConnection conn, string sql, List<XParam> dbParas = null, IDbTransaction tran = null)
         {
-            return await conn.Queryer<M>().Where(compareFunc).QueryListAsync(tran);
-        }
-        /// <summary>
-        /// 请参阅: <see langword=".QueryListAsync() 使用 https://www.cnblogs.com/Meng-NET/"/>
-        /// </summary>
-        public static async Task<List<VM>> QueryListAsync<M, VM>(this IDbConnection conn, Expression<Func<M, bool>> compareFunc, IDbTransaction tran = null)
-            where M : class, new()
-            where VM : class
-        {
-            return await conn.Queryer<M>().Where(compareFunc).QueryListAsync<VM>(tran);
-        }
-        /// <summary>
-        /// 请参阅: <see langword=".QueryListAsync() 使用 https://www.cnblogs.com/Meng-NET/"/>
-        /// </summary>
-        public static async Task<List<T>> QueryListAsync<M, T>
-            (this IDbConnection conn, Expression<Func<M, bool>> compareFunc, Expression<Func<M, T>> columnMapFunc, IDbTransaction tran = null)
-            where M : class, new()
-        {
-            return await conn.Queryer<M>().Where(compareFunc).QueryListAsync(columnMapFunc, tran);
+            var dc = new XContext(conn)
+            {
+                Crud = CrudEnum.SQL
+            };
+            dc.ParseSQL(sql);
+            dc.ParseParam(dbParas);
+            return await new QueryOneSQLAsyncImpl(dc).QueryOneAsync<T>(tran);
         }
 
-        /// <summary>
-        /// 请参阅: <see langword=".IsExistAsync() 使用 https://www.cnblogs.com/Meng-NET/"/>
-        /// </summary>
-        public static async Task<bool> IsExistAsync<M>(this IDbConnection conn, Expression<Func<M, bool>> compareFunc, IDbTransaction tran = null)
-            where M : class, new()
-        {
-            return await conn.Queryer<M>().Where(compareFunc).IsExistAsync(tran);
-        }
-
-        /// <summary>
-        /// Queryer 便捷 CountAsync 方法
-        /// </summary>
-        public static async Task<int> CountAsync<M>(this IDbConnection conn, Expression<Func<M, bool>> compareFunc, IDbTransaction tran = null)
-            where M : class, new()
-        {
-            return await conn.Queryer<M>().Where(compareFunc).CountAsync(tran);
-        }
-
-        public static async Task<F> SumAsync<M, F>(this IDbConnection conn, Expression<Func<M, bool>> compareFunc, Expression<Func<M, F>> propertyFunc, IDbTransaction tran = null)
-            where M : class, new()
-            where F : struct
-        {
-            return await conn.Queryer<M>().Where(compareFunc).SumAsync(propertyFunc, tran);
-        }
-        public static async Task<Nullable<F>> SumAsync<M, F>
-            (this IDbConnection conn, Expression<Func<M, bool>> compareFunc, Expression<Func<M, Nullable<F>>> propertyFunc, IDbTransaction tran = null)
-            where M : class, new()
-            where F : struct
-        {
-            return await conn.Queryer<M>().Where(compareFunc).SumAsync(propertyFunc, tran);
-        }
-
-        /******************************************************************************************************************************/
-
-        /// <summary>
-        /// Creater 便捷 CreateAsync 方法
-        /// </summary>
-        public static int Create<M>(this IDbConnection conn, M m, IDbTransaction tran = null)
-            where M : class, new()
-        {
-            return conn.Creater<M>().Create(m, tran);
-        }
-
-        /// <summary>
-        /// Creater 便捷 CreateBatchAsync 方法
-        /// </summary>
-        public static int CreateBatch<M>(this IDbConnection conn, IEnumerable<M> mList, IDbTransaction tran = null)
-            where M : class, new()
-        {
-            return conn.Creater<M>().CreateBatch(mList, tran);
-        }
-
-        /// <summary>
-        /// Deleter 便捷 DeleteAsync 方法
-        /// </summary>
-        public static int Delete<M>(this IDbConnection conn, Expression<Func<M, bool>> compareFunc, IDbTransaction tran = null)
-            where M : class, new()
-        {
-            return conn.Deleter<M>().Where(compareFunc).Delete(tran);
-        }
-
-        /// <summary>
-        /// Updater 便捷 UpdateAsync update fields 方法
-        /// </summary>
-        public static int Update<M>
-            (this IDbConnection conn, Expression<Func<M, bool>> compareFunc, dynamic filedsObject, IDbTransaction tran = null, SetEnum set = SetEnum.AllowedNull)
-            where M : class, new()
-        {
-            return conn.Updater<M>().Set(filedsObject as object).Where(compareFunc).Update(tran, set);
-        }
-
-        /******************************************************************************************************************************/
+        /*-------------------------------------------------------------*/
 
         /// <summary>
         /// Queryer 便捷-同步 QueryOneAsync 方法
@@ -368,6 +457,63 @@ namespace HPC.DAL
             return conn.Queryer<M>().Where(compareFunc).QueryOne(columnMapFunc, tran);
         }
 
+        /*-------------------------------------------------------------*/
+
+        public static T QueryOne<T>(this IDbConnection conn, string sql, List<XParam> dbParas = null, IDbTransaction tran = null)
+        {
+            var dc = new XContext(conn)
+            {
+                Crud = CrudEnum.SQL
+            };
+            dc.ParseSQL(sql);
+            dc.ParseParam(dbParas);
+            return new QueryOneSQLImpl(dc).QueryOne<T>(tran);
+        }
+        #endregion
+
+        #region QueryList API
+        /// <summary>
+        /// 请参阅: <see langword=".QueryListAsync() 使用 https://www.cnblogs.com/Meng-NET/"/>
+        /// </summary>
+        public static async Task<List<M>> QueryListAsync<M>(this IDbConnection conn, Expression<Func<M, bool>> compareFunc, IDbTransaction tran = null)
+            where M : class, new()
+        {
+            return await conn.Queryer<M>().Where(compareFunc).QueryListAsync(tran);
+        }
+        /// <summary>
+        /// 请参阅: <see langword=".QueryListAsync() 使用 https://www.cnblogs.com/Meng-NET/"/>
+        /// </summary>
+        public static async Task<List<VM>> QueryListAsync<M, VM>(this IDbConnection conn, Expression<Func<M, bool>> compareFunc, IDbTransaction tran = null)
+            where M : class, new()
+            where VM : class
+        {
+            return await conn.Queryer<M>().Where(compareFunc).QueryListAsync<VM>(tran);
+        }
+        /// <summary>
+        /// 请参阅: <see langword=".QueryListAsync() 使用 https://www.cnblogs.com/Meng-NET/"/>
+        /// </summary>
+        public static async Task<List<T>> QueryListAsync<M, T>
+            (this IDbConnection conn, Expression<Func<M, bool>> compareFunc, Expression<Func<M, T>> columnMapFunc, IDbTransaction tran = null)
+            where M : class, new()
+        {
+            return await conn.Queryer<M>().Where(compareFunc).QueryListAsync(columnMapFunc, tran);
+        }
+
+        /*-------------------------------------------------------------*/
+
+        public static async Task<List<T>> QueryListAsync<T>(this IDbConnection conn, string sql, List<XParam> dbParas = null, IDbTransaction tran = null)
+        {
+            var dc = new XContext(conn)
+            {
+                Crud = CrudEnum.SQL
+            };
+            dc.ParseSQL(sql);
+            dc.ParseParam(dbParas);
+            return await new QueryListSQLAsyncImpl(dc).QueryListAsync<T>(tran);
+        }
+
+        /*-------------------------------------------------------------*/
+
         /// <summary>
         /// 请参阅: <see langword=".QueryListAsync() 使用 https://www.cnblogs.com/Meng-NET/"/>
         /// </summary>
@@ -394,109 +540,8 @@ namespace HPC.DAL
             return conn.Queryer<M>().Where(compareFunc).QueryList(columnMapFunc, tran);
         }
 
-        /// <summary>
-        /// Queryer 便捷-同步 IsExistAsync 方法
-        /// </summary>
-        public static bool IsExist<M>(this IDbConnection conn, Expression<Func<M, bool>> compareFunc, IDbTransaction tran = null)
-            where M : class, new()
-        {
-            return conn.Queryer<M>().Where(compareFunc).IsExist(tran);
-        }
+        /*-------------------------------------------------------------*/
 
-        /// <summary>
-        /// Queryer 便捷 CountAsync 方法
-        /// </summary>
-        public static int Count<M>(this IDbConnection conn, Expression<Func<M, bool>> compareFunc, IDbTransaction tran = null)
-            where M : class, new()
-        {
-            return conn.Queryer<M>().Where(compareFunc).Count(tran);
-        }
-
-        public static F Sum<M, F>(this IDbConnection conn, Expression<Func<M, bool>> compareFunc, Expression<Func<M, F>> propertyFunc, IDbTransaction tran = null)
-            where M : class, new()
-            where F : struct
-        {
-            return conn.Queryer<M>().Where(compareFunc).Sum(propertyFunc, tran);
-        }
-        public static Nullable<F> Sum<M, F>
-            (this IDbConnection conn, Expression<Func<M, bool>> compareFunc, Expression<Func<M, Nullable<F>>> propertyFunc, IDbTransaction tran = null)
-            where M : class, new()
-            where F : struct
-        {
-            return conn.Queryer<M>().Where(compareFunc).Sum(propertyFunc, tran);
-        }
-
-        /******************************************************************************************************************************/
-
-        public static async Task<int> ExecuteNonQueryAsync(this IDbConnection conn, string sql, List<XParam> dbParas = null, IDbTransaction tran = null)
-        {
-            var dc = new XContext(conn)
-            {
-                Crud = CrudEnum.SQL
-            };
-            dc.ParseSQL(sql);
-            dc.ParseParam(dbParas);
-            return await new ExecuteNonQuerySQLAsyncImpl(dc).ExecuteNonQueryAsync(tran);
-        }
-        public static async Task<T> QueryOneAsync<T>(this IDbConnection conn, string sql, List<XParam> dbParas = null, IDbTransaction tran = null)
-        {
-            var dc = new XContext(conn)
-            {
-                Crud = CrudEnum.SQL
-            };
-            dc.ParseSQL(sql);
-            dc.ParseParam(dbParas);
-            return await new QueryOneSQLAsyncImpl(dc).QueryOneAsync<T>(tran);
-        }
-        public static async Task<List<T>> QueryListAsync<T>(this IDbConnection conn, string sql, List<XParam> dbParas = null, IDbTransaction tran = null)
-        {
-            var dc = new XContext(conn)
-            {
-                Crud = CrudEnum.SQL
-            };
-            dc.ParseSQL(sql);
-            dc.ParseParam(dbParas);
-            return await new QueryListSQLAsyncImpl(dc).QueryListAsync<T>(tran);
-        }
-        public static async Task<PagingResult<T>> QueryPagingAsync<T>
-            (this IDbConnection conn, PagingResult<T> paging, string totalCountSql, string pageDataSql, List<XParam> dbParas = null, IDbTransaction tran = null)
-        {
-            var dc = new XContext(conn)
-            {
-                Crud = CrudEnum.SQL
-            };
-            dc.PageIndex = paging.PageIndex;
-            dc.PageSize = paging.PageSize;
-            dc.ParseSQL(totalCountSql, pageDataSql);
-            dc.ParseParam(dbParas);
-            var result = await new QueryPagingSQLAsyncImpl(dc).QueryPagingAsync<T>(tran);
-            paging.TotalCount = result.TotalCount;
-            paging.Data = result.Data;
-            return paging;
-        }
-
-        /******************************************************************************************************************************/
-
-        public static int ExecuteNonQuery(this IDbConnection conn, string sql, List<XParam> dbParas = null, IDbTransaction tran = null)
-        {
-            var dc = new XContext(conn)
-            {
-                Crud = CrudEnum.SQL
-            };
-            dc.ParseSQL(sql);
-            dc.ParseParam(dbParas);
-            return new ExecuteNonQuerySQLImpl(dc).ExecuteNonQuery(tran);
-        }
-        public static T QueryOne<T>(this IDbConnection conn, string sql, List<XParam> dbParas = null, IDbTransaction tran = null)
-        {
-            var dc = new XContext(conn)
-            {
-                Crud = CrudEnum.SQL
-            };
-            dc.ParseSQL(sql);
-            dc.ParseParam(dbParas);
-            return new QueryOneSQLImpl(dc).QueryOne<T>(tran);
-        }
         public static List<T> QueryList<T>(this IDbConnection conn, string sql, List<XParam> dbParas = null, IDbTransaction tran = null)
         {
             var dc = new XContext(conn)
@@ -507,21 +552,82 @@ namespace HPC.DAL
             dc.ParseParam(dbParas);
             return new QueryListSQLImpl(dc).QueryList<T>(tran);
         }
-        public static PagingResult<T> QueryPaging<T>
-            (this IDbConnection conn, PagingResult<T> paging, string totalCountSql, string pageDataSql, List<XParam> dbParas = null, IDbTransaction tran = null)
+        #endregion
+
+        #region IsExist API
+        /// <summary>
+        /// 请参阅: <see langword=".IsExistAsync() 使用 https://www.cnblogs.com/Meng-NET/"/>
+        /// </summary>
+        public static async Task<bool> IsExistAsync<M>(this IDbConnection conn, Expression<Func<M, bool>> compareFunc, IDbTransaction tran = null)
+            where M : class, new()
         {
-            var dc = new XContext(conn)
-            {
-                Crud = CrudEnum.SQL
-            };
-            dc.PageIndex = paging.PageIndex;
-            dc.PageSize = paging.PageSize;
-            dc.ParseSQL(totalCountSql, pageDataSql);
-            dc.ParseParam(dbParas);
-            var result = new QueryPagingSQLImpl(dc).QueryPaging<T>(tran);
-            paging.TotalCount = result.TotalCount;
-            paging.Data = result.Data;
-            return paging;
+            return await conn.Queryer<M>().Where(compareFunc).IsExistAsync(tran);
+        }
+
+        /*-------------------------------------------------------------*/
+
+        /// <summary>
+        /// Queryer 便捷-同步 IsExistAsync 方法
+        /// </summary>
+        public static bool IsExist<M>(this IDbConnection conn, Expression<Func<M, bool>> compareFunc, IDbTransaction tran = null)
+            where M : class, new()
+        {
+            return conn.Queryer<M>().Where(compareFunc).IsExist(tran);
+        }
+        #endregion
+
+        #region Count API
+        /// <summary>
+        /// Queryer 便捷 CountAsync 方法
+        /// </summary>
+        public static async Task<int> CountAsync<M>(this IDbConnection conn, Expression<Func<M, bool>> compareFunc, IDbTransaction tran = null)
+            where M : class, new()
+        {
+            return await conn.Queryer<M>().Where(compareFunc).CountAsync(tran);
+        }
+
+        /*-------------------------------------------------------------*/
+
+        /// <summary>
+        /// Queryer 便捷 CountAsync 方法
+        /// </summary>
+        public static int Count<M>(this IDbConnection conn, Expression<Func<M, bool>> compareFunc, IDbTransaction tran = null)
+            where M : class, new()
+        {
+            return conn.Queryer<M>().Where(compareFunc).Count(tran);
+        } 
+        #endregion
+
+        /******************************************************************************************************************************/
+
+        public static async Task<F> SumAsync<M, F>(this IDbConnection conn, Expression<Func<M, bool>> compareFunc, Expression<Func<M, F>> propertyFunc, IDbTransaction tran = null)
+            where M : class, new()
+            where F : struct
+        {
+            return await conn.Queryer<M>().Where(compareFunc).SumAsync(propertyFunc, tran);
+        }
+        public static async Task<Nullable<F>> SumAsync<M, F>
+            (this IDbConnection conn, Expression<Func<M, bool>> compareFunc, Expression<Func<M, Nullable<F>>> propertyFunc, IDbTransaction tran = null)
+            where M : class, new()
+            where F : struct
+        {
+            return await conn.Queryer<M>().Where(compareFunc).SumAsync(propertyFunc, tran);
+        }
+
+        /*-------------------------------------------------------------*/
+
+        public static F Sum<M, F>(this IDbConnection conn, Expression<Func<M, bool>> compareFunc, Expression<Func<M, F>> propertyFunc, IDbTransaction tran = null)
+    where M : class, new()
+    where F : struct
+        {
+            return conn.Queryer<M>().Where(compareFunc).Sum(propertyFunc, tran);
+        }
+        public static Nullable<F> Sum<M, F>
+            (this IDbConnection conn, Expression<Func<M, bool>> compareFunc, Expression<Func<M, Nullable<F>>> propertyFunc, IDbTransaction tran = null)
+            where M : class, new()
+            where F : struct
+        {
+            return conn.Queryer<M>().Where(compareFunc).Sum(propertyFunc, tran);
         }
 
         /******************************************************************************************************************************/
@@ -537,10 +643,13 @@ namespace HPC.DAL
             }
             return conn;
         }
+
+        /*-------------------------------------------------------------*/
+
         /// <summary>
         /// Sql 调试跟踪 开启
         /// </summary>
-        public static IDbConnection OpenDebug(this IDbConnection conn, DebugEnum type = DebugEnum.Debug)
+        public static IDbConnection OpenDebug(this IDbConnection conn, DebugEnum type = DebugEnum.Output)
         {
             XConfig.IsDebug = true;
             XConfig.DebugType = type;
