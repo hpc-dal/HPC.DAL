@@ -33,10 +33,20 @@ namespace HPC.DAL
             }
 
             //
+            if (dc.AlreadyOutput)
+            {
+                return;
+            }
+            else
+            {
+                dc.AlreadyOutput = true;
+            }
+
+            //
             foreach (var sql in sqlList)
             {
                 var info = $@"
-=================================================================  <--  参数化 SQL 开始，{(XConfig.IsDebug ? "Debug 模式已开启！" : "")}
+=================================================================  <--  参数化 SQL 开始{(XConfig.IsDebug ? "，Debug 模式已开启！" : "")}
 {sql}
 =================================================================  <--  参数化 SQL 结束
                                         ";
