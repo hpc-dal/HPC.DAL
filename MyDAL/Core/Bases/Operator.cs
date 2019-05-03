@@ -124,7 +124,6 @@ namespace HPC.DAL.Core.Bases
             DC.Compare = CompareXEnum.None;
             DC.DPH.AddParameter(DC.DPH.SetDic(typeof(M), key, key, val, typeof(F)));
         }
-
         internal void SetDynamicHandle<M>(object mSet)
         {
             var tuples = GetSetKPV<M>(mSet);
@@ -138,12 +137,20 @@ namespace HPC.DAL.Core.Bases
 
         internal void MT_WhereAndOr(Operator op, Expression<Func<bool>> func)
         {
+            if (func == null)
+            {
+                throw XConfig.EC.Exception(XConfig.EC._002, $"Where/And/Or -- 过滤条件【Expression<Func<bool>> func】,不可为 null ！请使用【()=>true】表示无 where 条件查询！");
+            }
             var dic = op.DC.XE.FuncBoolExpression(func);
             op.DC.DPH.AddParameter(dic);
         }
         internal void ST_WhereAndOr<M>(Expression<Func<M, bool>> func)
             where M : class
         {
+            if (func == null)
+            {
+                throw XConfig.EC.Exception(XConfig.EC._042, $"Where/And/Or -- 过滤条件【Expression<Func<M, bool>> func】,不可为 null ！请使用【it=>true】表示无 where 条件查询！");
+            }
             var field = DC.XE.FuncMBoolExpression(func);
             DC.DPH.AddParameter(field);
         }
