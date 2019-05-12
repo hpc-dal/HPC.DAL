@@ -51,17 +51,13 @@ namespace MyDAL.Test.QueryAPI
 
             Assert.NotNull(res1);
 
-            tuple = (XDebug.SQL, XDebug.Parameters, XDebug.SqlWithParams);
-
-            var resR1 = await Conn
+            var resR1 = await Conn.OpenDebug()
                 .Queryer<BodyFitRecord>()
                 .Where(it => Guid.Parse("1fbd8a41-c75b-45c0-9186-016544284e2e") == it.Id)
                 .QueryOneAsync();
 
             Assert.NotNull(resR1);
             Assert.True(res1.Id == resR1.Id);
-
-            tuple = (XDebug.SQL, XDebug.Parameters, XDebug.SqlWithParams);
 
             /****************************************************************************************************************************************/
 
@@ -75,17 +71,13 @@ namespace MyDAL.Test.QueryAPI
 
             Assert.NotNull(res2);
 
-            tuple = (XDebug.SQL, XDebug.Parameters, XDebug.SqlWithParams);
-
-            var resR2 = await Conn
+            var resR2 = await Conn.OpenDebug()
                 .Queryer<BodyFitRecord>()
                 .Where(it => Convert.ToDateTime("2018-08-23 13:36:58") == it.CreatedOn)
                 .QueryOneAsync();
 
             Assert.NotNull(resR2);
             Assert.True(res2.Id == resR2.Id);
-
-            tuple = (XDebug.SQL, XDebug.Parameters, XDebug.SqlWithParams);
 
             /****************************************************************************************************************************************/
 
@@ -99,9 +91,7 @@ namespace MyDAL.Test.QueryAPI
 
             Assert.NotNull(res3);
 
-            tuple = (XDebug.SQL, XDebug.Parameters, XDebug.SqlWithParams);
-
-            var resR3 = await Conn
+            var resR3 = await Conn.OpenDebug()
                 .Queryer<BodyFitRecord>()
                 .Where(it => "xxxx" == it.BodyMeasureProperty)
                 .QueryOneAsync();
@@ -109,10 +99,9 @@ namespace MyDAL.Test.QueryAPI
             Assert.NotNull(resR3);
             Assert.True(res3.Id == resR3.Id);
 
-            tuple = (XDebug.SQL, XDebug.Parameters, XDebug.SqlWithParams);
-
             /****************************************************************************************************************************************/
 
+            xx = string.Empty;
         }
 
         [Fact]
@@ -126,10 +115,6 @@ namespace MyDAL.Test.QueryAPI
             var res1 = await Conn.QueryOneAsync<AlipayPaymentRecord, Guid>(it => it.Id == pk && it.CreatedOn == date, it => it.Id);
 
             Assert.True(res1 == pk);
-
-            tuple = (XDebug.SQL, XDebug.Parameters, XDebug.SqlWithParams);
-
-            /****************************************************************************************/
 
             xx = string.Empty;
         }
@@ -147,7 +132,7 @@ namespace MyDAL.Test.QueryAPI
 
             Assert.NotNull(res1);
 
-            tuple = (XDebug.SQL, XDebug.Parameters, XDebug.SqlWithParams);
+            
 
             /****************************************************************************************/
 
@@ -167,7 +152,7 @@ namespace MyDAL.Test.QueryAPI
 
             Assert.NotNull(res1);
 
-            tuple = (XDebug.SQL, XDebug.Parameters, XDebug.SqlWithParams);
+            
 
             /****************************************************************************************/
 
@@ -193,7 +178,7 @@ namespace MyDAL.Test.QueryAPI
 
             Assert.NotNull(res1);
 
-            tuple = (XDebug.SQL, XDebug.Parameters, XDebug.SqlWithParams);
+            
 
             /****************************************************************************************/
 
@@ -213,7 +198,7 @@ namespace MyDAL.Test.QueryAPI
 
             Assert.True(res1.Equals(Guid.Parse("000f5f16-5502-4324-b5d6-016544300263")));
 
-            tuple = (XDebug.SQL, XDebug.Parameters, XDebug.SqlWithParams);
+            
 
             xx = string.Empty;
         }
@@ -233,7 +218,7 @@ namespace MyDAL.Test.QueryAPI
 
             Assert.NotNull(res4);
 
-            tuple = (XDebug.SQL, XDebug.Parameters, XDebug.SqlWithParams);
+            
 
             /****************************************************************************************************************************************/
 
@@ -257,7 +242,7 @@ namespace MyDAL.Test.QueryAPI
             Assert.NotNull(res1);
             Assert.Null(res1.XXXX);
 
-            tuple = (XDebug.SQL, XDebug.Parameters, XDebug.SqlWithParams);
+            
 
             /****************************************************************************************************************************************/
 
@@ -282,7 +267,7 @@ namespace MyDAL.Test.QueryAPI
 
             Assert.Equal("樊士芹", res1.XXXX);
 
-            tuple = (XDebug.SQL, XDebug.Parameters, XDebug.SqlWithParams);
+            
 
             /********************************************************************************************************************************/
 
@@ -305,7 +290,7 @@ namespace MyDAL.Test.QueryAPI
 
             Assert.NotNull(res1);
 
-            tuple = (XDebug.SQL, XDebug.Parameters, XDebug.SqlWithParams);
+            
 
             xx = string.Empty;
         }
@@ -326,7 +311,7 @@ namespace MyDAL.Test.QueryAPI
             Assert.NotNull(res1);
             Assert.Equal("夏明君", res1.Name);
 
-            tuple = (XDebug.SQL, XDebug.Parameters, XDebug.SqlWithParams);
+            
 
             /****************************************************************************************************************************************/
 
@@ -356,7 +341,7 @@ namespace MyDAL.Test.QueryAPI
             Assert.NotNull(res1);
             Assert.Equal("夏明君", res1.zz);
 
-            tuple = (XDebug.SQL, XDebug.Parameters, XDebug.SqlWithParams);
+            
 
             xx = string.Empty;
         }
@@ -384,7 +369,7 @@ namespace MyDAL.Test.QueryAPI
 
             Assert.True(res1.Length > 1);
 
-            tuple = (XDebug.SQL, XDebug.Parameters, XDebug.SqlWithParams);
+            
 
             xx = string.Empty;
         }
@@ -417,7 +402,7 @@ namespace MyDAL.Test.QueryAPI
             Assert.NotNull(res1);
             Assert.Equal("夏明君", res1.zz);
 
-            tuple = (XDebug.SQL, XDebug.Parameters, XDebug.SqlWithParams);
+            
 
             xx = string.Empty;
         }
@@ -445,7 +430,7 @@ namespace MyDAL.Test.QueryAPI
             Assert.NotNull(res1);
             Assert.Equal("夏明君", res1.zz);
 
-            tuple = (XDebug.SQL, XDebug.Parameters, XDebug.SqlWithParams);
+            
 
             xx = string.Empty;
         }

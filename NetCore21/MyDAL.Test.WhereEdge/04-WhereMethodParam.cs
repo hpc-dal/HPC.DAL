@@ -3,7 +3,6 @@ using MyDAL.Test.Entities.MyDAL_TestDB;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -33,7 +32,7 @@ namespace MyDAL.Test.WhereEdge
 
             Assert.NotNull(res1);
 
-            tuple = (XDebug.SQL, XDebug.Parameters,XDebug.SqlWithParams);
+            
 
             xx = string.Empty;
 
@@ -42,7 +41,7 @@ namespace MyDAL.Test.WhereEdge
 
             Assert.NotNull(resR1);
 
-            tuple = (XDebug.SQL, XDebug.Parameters,XDebug.SqlWithParams);
+            
 
             Assert.True(res1.Id.Equals(Guid.Parse("000a9465-8665-40bf-90e3-0165442d9120")));
             Assert.True(resR1.Id.Equals(Guid.Parse("000a9465-8665-40bf-90e3-0165442d9120")));

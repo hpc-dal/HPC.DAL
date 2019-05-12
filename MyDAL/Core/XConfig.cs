@@ -17,11 +17,6 @@ namespace HPC.DAL.Core
 {
     internal class XConfig
     {
-        internal static bool IsDebug { get; set; } = false;
-        internal static DebugEnum DebugType { get; set; } = DebugEnum.Output;
-
-        /************************************************************************************************************/
-
         internal static int CommandTimeout { get; set; } = 30;  // s 
 
         internal static MethodInfo EnumParse { get; } = typeof(Enum).GetMethod(nameof(Enum.Parse), new Type[] { typeof(Type), typeof(string), typeof(bool) });
@@ -114,6 +109,7 @@ namespace HPC.DAL.Core
                     new KeyValuePair<Type, Func<Context, ParamTypeEnum, DbType>>(CSTC.Decimal,DTC.DecimalProc),
                     new KeyValuePair<Type, Func<Context, ParamTypeEnum, DbType>>(CSTC.Bool,DTC.BoolProc),
                     new KeyValuePair<Type, Func<Context, ParamTypeEnum, DbType>>(CSTC.String,DTC.StringProc),
+                    new KeyValuePair<Type, Func<Context, ParamTypeEnum, DbType>>(CSTC.ListString,DTC.ListStringProc),
                     new KeyValuePair<Type, Func<Context, ParamTypeEnum, DbType>>(CSTC.DateTime,DTC.DateTimeProc),
                     new KeyValuePair<Type, Func<Context, ParamTypeEnum, DbType>>(CSTC.Guid,DTC.GuidProc),
                     new KeyValuePair<Type, Func<Context, ParamTypeEnum, DbType>>(CSTC.Byte,DTC.ByteProc),
@@ -139,9 +135,11 @@ namespace HPC.DAL.Core
                     new KeyValuePair<Type, Func<DicParam, Type, Context, ParamInfo>>(CSTC.Decimal,PIC.DecimalParam),
                     new KeyValuePair<Type, Func<DicParam, Type, Context, ParamInfo>>(CSTC.Bool,PIC.BoolParam),
                     new KeyValuePair<Type, Func<DicParam, Type, Context, ParamInfo>>(CSTC.String,PIC.StringParam),
+                    new KeyValuePair<Type, Func<DicParam, Type, Context, ParamInfo>>(CSTC.ListString,PIC.ListStringParam),
                     new KeyValuePair<Type, Func<DicParam, Type, Context, ParamInfo>>(CSTC.DateTime,PIC.DateTimeParam),
                     new KeyValuePair<Type, Func<DicParam, Type, Context, ParamInfo>>(CSTC.Guid,PIC.GuidParam),
                     new KeyValuePair<Type, Func<DicParam, Type, Context, ParamInfo>>(CSTC.Byte,PIC.ByteParam),
+                    new KeyValuePair<Type, Func<DicParam, Type, Context, ParamInfo>>(CSTC.ByteArray,PIC.ByteArryParam),
                     new KeyValuePair<Type, Func<DicParam, Type, Context, ParamInfo>>(CSTC.Char,PIC.CharParam),
                     new KeyValuePair<Type, Func<DicParam, Type, Context, ParamInfo>>(CSTC.Double,PIC.DoubleParam),
                     new KeyValuePair<Type, Func<DicParam, Type, Context, ParamInfo>>(CSTC.Float,PIC.FloatParam),
