@@ -2,6 +2,7 @@
 using HPC.DAL.Core.Common;
 using HPC.DAL.Core.Enums;
 using HPC.DAL.Core.Expressions;
+using HPC.DAL.Core.Models.Cache;
 using HPC.DAL.Core.Models.ExpPara;
 using System;
 using System.Collections.Generic;
@@ -665,13 +666,7 @@ namespace HPC.DAL.Core
         }
         internal ColumnParam GetKey(Expression bodyL, FuncEnum func, CompareXEnum compareX, string format = "")
         {
-            if (bodyL.NodeType == ExpressionType.Convert)
-            {
-                var exp = bodyL as UnaryExpression;
-                var opMem = exp.Operand;
-                return GetKey(opMem, func, compareX);
-            }
-            else if (bodyL.NodeType == ExpressionType.MemberAccess)
+            if (bodyL.NodeType == ExpressionType.MemberAccess)
             {
                 var leftBody = bodyL as MemberExpression;
                 var prop = default(PropertyInfo);
@@ -680,7 +675,7 @@ namespace HPC.DAL.Core
                 var mType = default(Type);
                 var alias = GetAlias(leftBody);
                 if (func == FuncEnum.CharLength
-                    || func == FuncEnum.DateFormat)
+                    || func == FuncEnum.ToString_CS_DateTime_Format)
                 {
                     var exp = leftBody.Expression;
                     if (exp is MemberExpression)
@@ -707,8 +702,20 @@ namespace HPC.DAL.Core
 
                 //
                 var type = prop.PropertyType;
-                var tbm = DC.XC.GetTableModel(mType);
-                var attr = tbm.TMPCA.FirstOrDefault(it => prop.Name.Equals(it.PropName, StringComparison.OrdinalIgnoreCase)).ColAttr;
+                var tbm = default(TableModelCache);
+                try
+                {
+                    tbm = DC.XC.GetTableModel(mType);
+                }
+                catch (Exception ex)
+                {
+                    if (ex.Message.Contains("004")
+                        && ex.Message.Contains("[XTable]"))
+                    {
+                        throw XConfig.EC.Exception(XConfig.EC._094, $"表达式 -- {bodyL.ToString()} -- 不能正确解析！");
+                    }
+                }
+                var attr = tbm.PCA.FirstOrDefault(it => prop.Name.Equals(it.PropName, StringComparison.OrdinalIgnoreCase)).ColAttr;
                 return new ColumnParam
                 {
                     Prop = prop.Name,
@@ -718,6 +725,12 @@ namespace HPC.DAL.Core
                     TbMType = mType,
                     Format = format
                 };
+            }
+            else if (bodyL.NodeType == ExpressionType.Convert)
+            {
+                var exp = bodyL as UnaryExpression;
+                var opMem = exp.Operand;
+                return GetKey(opMem, func, compareX);
             }
             else if (bodyL.NodeType == ExpressionType.Call)
             {
@@ -734,11 +747,16 @@ namespace HPC.DAL.Core
                     var mem = mcExpr.Arguments[0];
                     return GetKey(mem, func, compareX);
                 }
-                else if (func == FuncEnum.DateFormat)
+                else if (func == FuncEnum.ToString_CS_DateTime_Format)
                 {
                     var mem = mcExpr.Object;
                     var val = DC.VH.ValueProcess(mcExpr.Arguments[0], XConfig.CSTC.String);
                     return GetKey(mem, func, compareX, val.Val.ToString());
+                }
+                else if (func == FuncEnum.ToString_CS)
+                {
+                    var mem = mcExpr.Object;
+                    return GetKey(mem, func, compareX);
                 }
                 else
                 {
@@ -753,30 +771,29 @@ namespace HPC.DAL.Core
         private DicParam BodyProcess(Expression body, ParameterExpression firstParam)
         {
             //
-            var result = default(DicParam);
             var nodeType = body.NodeType;
             if (nodeType == ExpressionType.Not)
             {
-                result = NotHandle(body, firstParam);
+                return NotHandle(body, firstParam);
             }
             else if (nodeType == ExpressionType.Call)
             {
-                result = CallHandle(body as MethodCallExpression);
+                return CallHandle(body as MethodCallExpression);
             }
             else if (nodeType == ExpressionType.Constant)
             {
                 var cExpr = body as ConstantExpression;
-                result = ConstantHandle(cExpr, cExpr.Type);
+                return ConstantHandle(cExpr, cExpr.Type);
             }
             else if (nodeType == ExpressionType.MemberAccess)
             {
                 if (IsNullableExpr(body))
                 {
-                    result = MemberAccessHandle((body as MemberExpression).Expression as MemberExpression);
+                    return MemberAccessHandle((body as MemberExpression).Expression as MemberExpression);
                 }
                 else
                 {
-                    result = MemberAccessHandle(body as MemberExpression);
+                    return MemberAccessHandle(body as MemberExpression);
                 }
             }
             else if (nodeType == ExpressionType.Convert)
@@ -786,30 +803,29 @@ namespace HPC.DAL.Core
                 {
                     throw XConfig.EC.Exception(XConfig.EC._052, "无法解析 列名2 !!!");
                 }
-                result = DC.DPH.ColumnDic(cp);
+                return DC.DPH.ColumnDic(cp);
             }
             else if (nodeType == ExpressionType.MemberInit)
             {
                 var miExpr = body as MemberInitExpression;
-                result = DC.DPH.SelectColumnDic(HandSelectMemberInit(miExpr));
+                return DC.DPH.SelectColumnDic(HandSelectMemberInit(miExpr));
             }
             else if (nodeType == ExpressionType.New)
             {
-                result = NewHandle(body);
+                return NewHandle(body);
             }
             else if (IsBinaryExpr(nodeType))
             {
-                result = BinaryHandle(body, firstParam);
+                return BinaryHandle(body, firstParam);
             }
             else if (IsMultiExpr(nodeType))
             {
-                result = MultiHandle(body, firstParam, nodeType);
+                return MultiHandle(body, firstParam, nodeType);
             }
             else
             {
                 throw XConfig.EC.Exception(XConfig.EC._003, body.ToString());
             }
-            return result;
         }
 
         /********************************************************************************************************************/

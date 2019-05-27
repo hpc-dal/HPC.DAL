@@ -162,6 +162,67 @@ namespace MyDAL.Test.Update
         }
 
         [Fact]
+        public async Task History_03()
+        {
+
+            xx = string.Empty;
+
+            var agent = await Conn.QueryOneAsync<Agent>(it => it.Id == Guid.Parse("040afaad-ae07-42fc-9dd0-0165443c847d"));
+            agent.PathId = "yyyyyyy";
+            agent.ActiveOrderId = null;
+
+            var res1 = await Conn.UpdateAsync<Agent>(it => it.Id == agent.Id, new
+            {
+                agent.PathId,
+                agent.ActiveOrderId
+            });
+
+
+
+            var res11 = await Conn.QueryOneAsync<Agent>(it => it.Id == agent.Id);
+
+            Assert.Equal("yyyyyyy", res11.PathId, true);
+            Assert.Null(res11.ActiveOrderId);
+
+            /*****************************************************************************************************************************************************************/
+
+            xx = string.Empty;
+
+        }
+
+        [Fact]
+        public async Task History_04()
+        {
+
+            xx = string.Empty;
+
+            var agent = await Conn.QueryOneAsync<Agent>(it => it.Id == Guid.Parse("040afaad-ae07-42fc-9dd0-0165443c847d"));
+            agent.PathId = "xxxxxxx";
+            agent.ActiveOrderId = null;
+
+            var res1 = await Conn
+                .Updater<Agent>()
+                .Set(new
+                {
+                    agent.PathId,
+                    agent.ActiveOrderId
+                })
+                .Where(it => it.Id == agent.Id)
+                .UpdateAsync();
+
+
+
+            var res11 = await Conn.QueryOneAsync<Agent>(it => it.Id == agent.Id);
+
+            Assert.Equal("xxxxxxx", res11.PathId, true);
+            Assert.Null(res11.ActiveOrderId);
+
+            /*****************************************************************************************************************************************************************/
+
+            xx = string.Empty;
+        }
+
+        [Fact]
         public async Task Mock_UpdateAll_Shortcut()
         {
             xx = string.Empty;
@@ -288,7 +349,7 @@ namespace MyDAL.Test.Update
                 var res1 = await Conn.UpdateAsync<Agent>(it => it.Id == agent.Id, new
                 {
                     agent.PathId
-                }, SetEnum.NotAllowedNull);
+                });
             }
             catch (Exception ex)
             {
@@ -299,35 +360,6 @@ namespace MyDAL.Test.Update
             /*****************************************************************************************************************************************************************/
 
             xx = string.Empty;
-        }
-
-        [Fact]
-        public async Task Update_SetField_IgnoreNull_Shortcut()
-        {
-
-            xx = string.Empty;
-
-            var agent = await Conn.QueryOneAsync<Agent>(it => it.Id == Guid.Parse("040afaad-ae07-42fc-9dd0-0165443c847d"));
-            agent.PathId = "yyyyyyy";
-            agent.ActiveOrderId = null;
-
-            var res1 = await Conn.UpdateAsync<Agent>(it => it.Id == agent.Id, new
-            {
-                agent.PathId,
-                agent.ActiveOrderId
-            }, SetEnum.IgnoreNull);
-
-            
-
-            var res11 = await Conn.QueryOneAsync<Agent>(it => it.Id == agent.Id);
-
-            Assert.Equal("yyyyyyy", res11.PathId, true);
-            Assert.NotNull(res11.ActiveOrderId);
-
-            /*****************************************************************************************************************************************************************/
-
-            xx = string.Empty;
-
         }
 
         [Fact]
@@ -413,7 +445,7 @@ namespace MyDAL.Test.Update
                     .Updater<Agent>()
                     .Set(it => it.PathId, null)
                     .Where(it => it.Id == agent.Id)
-                    .UpdateAsync(SetEnum.NotAllowedNull);
+                    .UpdateAsync();
             }
             catch (Exception ex)
             {
@@ -422,38 +454,6 @@ namespace MyDAL.Test.Update
             }
 
             
-
-            /*****************************************************************************************************************************************************************/
-
-            xx = string.Empty;
-        }
-
-        [Fact]
-        public async Task Update_SetField_IgnoreNull_ST()
-        {
-
-            xx = string.Empty;
-
-            var agent = await Conn.QueryOneAsync<Agent>(it => it.Id == Guid.Parse("040afaad-ae07-42fc-9dd0-0165443c847d"));
-            agent.PathId = "xxxxxxx";
-            agent.ActiveOrderId = null;
-
-            var res1 = await Conn
-                .Updater<Agent>()
-                .Set(new
-                {
-                    agent.PathId,
-                    agent.ActiveOrderId
-                })
-                .Where(it => it.Id == agent.Id)
-                .UpdateAsync(SetEnum.IgnoreNull);
-
-            
-
-            var res11 = await Conn.QueryOneAsync<Agent>(it => it.Id == agent.Id);
-
-            Assert.Equal("xxxxxxx", res11.PathId, true);
-            Assert.NotNull(res11.ActiveOrderId);
 
             /*****************************************************************************************************************************************************************/
 

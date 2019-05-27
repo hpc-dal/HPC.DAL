@@ -2,6 +2,7 @@
 using MyDAL.Test.Entities.MyDAL_TestDB;
 using MyDAL.Test.Entities.MySql;
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
@@ -69,6 +70,21 @@ namespace MyDAL.Test.CsFunc
             var res_Enum = await Conn.QueryOneAsync<MySQL_EveryType>(it => it.Char == $"{pk}-char", it => it.Enum.ToString());
             Assert.Equal(MySQL_Enum.A.ToString(), res_Enum);
 
+            var res_Enum_Null = await Conn.QueryOneAsync<MySQL_EveryType>(it => it.Char == $"{pk}-char", it => it.Enum_Null.ToString());
+            Assert.Equal(MySQL_Enum.B.ToString(), res_Enum_Null);
+
+            var res_Set = await Conn.QueryOneAsync<MySQL_EveryType>(it => it.Char == $"{pk}-char", it => it.Set.ToString());
+            Assert.Equal(string.Join(",", new List<string> { "music", "movie" }), res_Set);
+
+            var res_Set_Null = await Conn.QueryOneAsync<MySQL_EveryType>(it => it.Char == $"{pk}-char", it => it.Set_Null.ToString());
+            Assert.Equal(string.Join(",", new List<string> { "swimming" }), res_Set_Null);
+
+            var res_TinyInt = await Conn.QueryOneAsync<MySQL_EveryType>(it => it.Char == $"{pk}-char", it => it.TinyInt.ToString());
+            Assert.Equal("65", res_TinyInt);
+
+            var res_TinyInt_Null = await Conn.QueryOneAsync<MySQL_EveryType>(it => it.Char == $"{pk}-char", it => it.TinyInt_Null.ToString());
+            Assert.Equal("65", res_TinyInt_Null);
+
             xx = string.Empty;
         }
 
@@ -91,7 +107,46 @@ namespace MyDAL.Test.CsFunc
         }
 
         [Fact]
-        public async Task DateTime_yyyy_MM_dd()
+        public async Task DateTime_Query_yyyy_MM_dd()
+        {
+            xx = string.Empty;
+
+            var res1 = await Conn
+                .Queryer<Agent>()
+                .Distinct()
+                .QueryListAsync(it => it.CreatedOn.ToString("yyyy-MM-dd"));
+
+            Assert.True(res1.Count == 2);
+        }
+
+        [Fact]
+        public async Task DateTime_Query_yyyy_MM()
+        {
+            xx = string.Empty;
+
+            var res1 = await Conn
+                .Queryer<Agent>()
+                .Distinct()
+                .QueryListAsync(it => it.CreatedOn.ToString("yyyy-MM"));
+
+            Assert.True(res1.Count == 2);
+        }
+
+        [Fact]
+        public async Task DateTime_Query_yyyy()
+        {
+            xx = string.Empty;
+
+            var res1 = await Conn
+                .Queryer<Agent>()
+                .Distinct()
+                .QueryListAsync(it => it.CreatedOn.ToString("yyyy"));
+
+            Assert.True(res1.Count == 2);
+        }
+
+        [Fact]
+        public async Task DateTime_Where_yyyy_MM_dd()
         {
             var date = DateTime.Parse("2018-08-16 12:03:47.225916");
 
@@ -108,7 +163,7 @@ namespace MyDAL.Test.CsFunc
         }
 
         [Fact]
-        public async Task DateTime_yyyy_MM()
+        public async Task DateTime_Where_yyyy_MM()
         {
             var date = DateTime.Parse("2018-08-16 12:03:47.225916");
 
@@ -125,7 +180,7 @@ namespace MyDAL.Test.CsFunc
         }
 
         [Fact]
-        public async Task DateTime_yyyy()
+        public async Task DateTime_Where_yyyy()
         {
             var date = DateTime.Parse("2018-08-16 12:03:47.225916");
 
@@ -142,7 +197,7 @@ namespace MyDAL.Test.CsFunc
         }
 
         [Fact]
-        public async Task DateTime_Null_yyyy_MM_dd()
+        public async Task DateTime_Where_Nullable_yyyy_MM_dd()
         {
             xx = string.Empty;
 

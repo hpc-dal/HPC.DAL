@@ -2,6 +2,7 @@
 using HPC.DAL.Core.Bases;
 using HPC.DAL.Core.Common;
 using HPC.DAL.Core.Enums;
+using HPC.DAL.Core.Enums.Funcs;
 using HPC.DAL.DataRainbow.XCommon.Bases;
 using HPC.DAL.DataRainbow.XCommon.Interfaces;
 using System;
@@ -256,7 +257,7 @@ namespace HPC.DAL.DataRainbow.XCommon
             {
                 CharLengthProcess(db);
             }
-            else if (db.Func == FuncEnum.DateFormat)
+            else if (db.Func == FuncEnum.ToString_CS_DateTime_Format)
             {
                 DateFormatProcess(db);
             }
@@ -360,6 +361,101 @@ namespace HPC.DAL.DataRainbow.XCommon
 
         /****************************************************************************************************************************/
 
+        private void SelectAllCols()
+        {
+            Star(X);
+        }
+        private void SelectSpecialNoFuncCol(DicParam dic)
+        {
+            if (dic.Crud == CrudEnum.Join)
+            {
+                if (dic.Option == OptionEnum.Column)
+                {
+                    DbSql.Column(dic.TbAlias, dic.TbCol, X);
+                }
+                else if (dic.Option == OptionEnum.ColumnAs)
+                {
+                    DbSql.Column(dic.TbAlias, dic.TbCol, X); As(X); DbSql.ColumnAlias(dic.TbColAlias, X);
+                }
+            }
+            else if (dic.Crud == CrudEnum.Query)
+            {
+                if (dic.Option == OptionEnum.Column)
+                {
+                    DbSql.Column(string.Empty, dic.TbCol, X);
+                }
+                else if (dic.Option == OptionEnum.ColumnAs)
+                {
+                    DbSql.Column(string.Empty, dic.TbCol, X); As(X); DbSql.ColumnAlias(dic.TbColAlias, X);
+                }
+            }
+        }
+        private void SelectSpecialDateFormatCol(DicParam dic)
+        {
+            if (dic.Crud == CrudEnum.Join)
+            {
+                if (dic.Option == OptionEnum.Column)
+                {
+                    Function(dic.Func, X, DC); LeftRoundBracket(X); DbSql.Column(dic.TbAlias, dic.TbCol, X); Comma(X); StringConst(dic.Format, X); RightRoundBracket(X);
+                }
+                else if (dic.Option == OptionEnum.ColumnAs)
+                {
+                    Function(dic.Func, X, DC); LeftRoundBracket(X); DbSql.Column(dic.TbAlias, dic.TbCol, X); Comma(X); StringConst(dic.Format, X); RightRoundBracket(X);
+                    As(X); DbSql.ColumnAlias(dic.TbColAlias, X);
+                }
+            }
+            else if (dic.Crud == CrudEnum.Query)
+            {
+                if (dic.Option == OptionEnum.Column)
+                {
+                    Function(dic.Func, X, DC); LeftRoundBracket(X); DbSql.Column(string.Empty, dic.TbCol, X); Comma(X); StringConst(dic.Format, X); RightRoundBracket(X);
+                }
+                else if (dic.Option == OptionEnum.ColumnAs)
+                {
+                    Function(dic.Func, X, DC); LeftRoundBracket(X); DbSql.Column(string.Empty, dic.TbCol, X); Comma(X); StringConst(dic.Format, X); RightRoundBracket(X);
+                    As(X); DbSql.ColumnAlias(dic.TbColAlias, X);
+                }
+            }
+        }
+        private void ToStringCol(string tbAlias, string tbCol, ToStringEnum func)
+        {
+            if (func == ToStringEnum.concat)
+            {
+                X.Append("concat"); LeftRoundBracket(X); DbSql.Column(tbAlias, tbCol, X); Comma(X); StringConst(string.Empty, X); RightRoundBracket(X);
+            }
+            else
+            {
+                throw XConfig.EC.Exception(XConfig.EC._095, $"函数 -- {func.ToString()} -- 未能解析！");
+            }
+        }
+        private void SelectSpecialCsToStringCol(DicParam dic)
+        {
+            if (dic.Crud == CrudEnum.Join)
+            {
+                if (dic.Option == OptionEnum.Column)
+                {
+                    ToStringCol(dic.TbAlias, dic.TbCol, ToStringEnum.concat);
+                }
+                else if (dic.Option == OptionEnum.ColumnAs)
+                {
+                    ToStringCol(dic.TbAlias, dic.TbCol, ToStringEnum.concat); As(X); DbSql.ColumnAlias(dic.TbColAlias, X);
+                }
+            }
+            else if (dic.Crud == CrudEnum.Query)
+            {
+                if (dic.Option == OptionEnum.Column)
+                {
+                    ToStringCol(string.Empty, dic.TbCol, ToStringEnum.concat);
+                }
+                else if (dic.Option == OptionEnum.ColumnAs)
+                {
+                    ToStringCol(string.Empty, dic.TbCol, ToStringEnum.concat); As(X); DbSql.ColumnAlias(dic.TbColAlias, X);
+                }
+            }
+        }
+
+        /****************************************************************************************************************************/
+
         internal protected void InsertColumn()
         {
             Spacing(X);
@@ -378,26 +474,6 @@ namespace HPC.DAL.DataRainbow.XCommon
             //
             var list = DC.Parameters.Where(it => it.Action == ActionEnum.Update)?.ToList();
             if (list == null || list.Count == 0) { throw XConfig.EC.Exception(XConfig.EC._053, "没有设置任何要更新的字段!"); }
-
-            //
-            if (DC.Set == SetEnum.AllowedNull)
-            { }
-            else if (DC.Set == SetEnum.NotAllowedNull)
-            {
-                if (list.Any(it => it.ParamInfo.Value == DBNull.Value))
-                {
-                    throw XConfig.EC.Exception(XConfig.EC._054, $"{DC.Set} -- 字段:[[{string.Join(",", list.Where(it => it.ParamInfo.Value == DBNull.Value).Select(it => it.TbCol))}]]的值不能设为 Null !!!");
-                }
-            }
-            else if (DC.Set == SetEnum.IgnoreNull)
-            {
-                list = list.Where(it => it.ParamInfo.Value != DBNull.Value)?.ToList();
-                if (list == null || list.Count == 0) { throw XConfig.EC.Exception(XConfig.EC._055, "没有设置任何要更新的字段!"); }
-            }
-            else
-            {
-                throw XConfig.EC.Exception(XConfig.EC._012, DC.Set.ToString());
-            }
 
             //
             Spacing(X);
@@ -427,18 +503,17 @@ namespace HPC.DAL.DataRainbow.XCommon
         internal protected void SelectColumn()
         {
             Spacing(X);
+
+            //
             var col = DC.Parameters.FirstOrDefault(it => IsSelectColumnParam(it));
-            if (col == null)
+            var items = col?.Columns.Where(it => it.Option == OptionEnum.Column || it.Option == OptionEnum.ColumnAs)?.ToList();
+            if (col == null || items == null || items.Count <= 0)
             {
-                Star(X);
+                SelectAllCols();
                 return;
             }
-            var items = col.Columns.Where(it => it.Option == OptionEnum.Column || it.Option == OptionEnum.ColumnAs)?.ToList();
-            if (items == null || items.Count <= 0)
-            {
-                Star(X);
-                return;
-            }
+
+            //
             var i = 0;
             foreach (var dic in items)
             {
@@ -447,59 +522,19 @@ namespace HPC.DAL.DataRainbow.XCommon
                 if (items.Count > 1) { Tab(X); }
                 if (dic.Func == FuncEnum.None)
                 {
-                    if (dic.Crud == CrudEnum.Join)
-                    {
-                        if (dic.Option == OptionEnum.Column)
-                        {
-                            DbSql.Column(dic.TbAlias, dic.TbCol, X);
-                        }
-                        else if (dic.Option == OptionEnum.ColumnAs)
-                        {
-                            DbSql.Column(dic.TbAlias, dic.TbCol, X); As(X); DbSql.ColumnAlias(dic.TbColAlias, X);
-                        }
-                    }
-                    else if (dic.Crud == CrudEnum.Query)
-                    {
-                        if (dic.Option == OptionEnum.Column)
-                        {
-                            DbSql.Column(string.Empty, dic.TbCol, X);
-                        }
-                        else if (dic.Option == OptionEnum.ColumnAs)
-                        {
-                            DbSql.Column(string.Empty, dic.TbCol, X); As(X); DbSql.ColumnAlias(dic.TbColAlias, X);
-                        }
-                    }
+                    SelectSpecialNoFuncCol(dic);
                 }
-                else if (dic.Func == FuncEnum.DateFormat)
+                else if (dic.Func == FuncEnum.ToString_CS_DateTime_Format)
                 {
-                    if (dic.Crud == CrudEnum.Join)
-                    {
-                        if (dic.Option == OptionEnum.Column)
-                        {
-                            Function(dic.Func, X, DC); LeftRoundBracket(X); DbSql.Column(dic.TbAlias, dic.TbCol, X); Comma(X); StringConst(dic.Format, X); RightRoundBracket(X);
-                        }
-                        else if (dic.Option == OptionEnum.ColumnAs)
-                        {
-                            Function(dic.Func, X, DC); LeftRoundBracket(X); DbSql.Column(dic.TbAlias, dic.TbCol, X); Comma(X); StringConst(dic.Format, X); RightRoundBracket(X);
-                            As(X); DbSql.ColumnAlias(dic.TbColAlias, X);
-                        }
-                    }
-                    else if (dic.Crud == CrudEnum.Query)
-                    {
-                        if (dic.Option == OptionEnum.Column)
-                        {
-                            Function(dic.Func, X, DC); LeftRoundBracket(X); DbSql.Column(string.Empty, dic.TbCol, X); Comma(X); StringConst(dic.Format, X); RightRoundBracket(X);
-                        }
-                        else if (dic.Option == OptionEnum.ColumnAs)
-                        {
-                            Function(dic.Func, X, DC); LeftRoundBracket(X); DbSql.Column(string.Empty, dic.TbCol, X); Comma(X); StringConst(dic.Format, X); RightRoundBracket(X);
-                            As(X); DbSql.ColumnAlias(dic.TbColAlias, X);
-                        }
-                    }
+                    SelectSpecialDateFormatCol(dic);
+                }
+                else if (dic.Func == FuncEnum.ToString_CS)
+                {
+                    SelectSpecialCsToStringCol(dic);
                 }
                 else
                 {
-                    throw XConfig.EC.Exception(XConfig.EC._007, dic.Func.ToString());
+                    throw XConfig.EC.Exception(XConfig.EC._007, $"函数 -- {dic.Func.ToString()} -- 未解析！");
                 }
                 if (i != items.Count) { Comma(X); }
             }

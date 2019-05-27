@@ -24,6 +24,18 @@ namespace HPC.DAL.Core.Extensions
             return false;
         }
 
+        internal static bool IsSimpleValueType(this Type type)
+        {
+            if (type.IsValueType
+                && !type.IsEnum
+                && type != XConfig.CSTC.DateTime
+                && !type.IsNullable())
+            {
+                return true;
+            }
+            return false;
+        }
+
         internal static bool IsSingleColumn(this Type type)
         {
             if (type.IsValueType
