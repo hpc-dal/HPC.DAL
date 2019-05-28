@@ -26,10 +26,10 @@ namespace HPC.DAL.Impls.ImplSyncs
             DC.Func = FuncEnum.Sum;
             var dic = DC.XE.FuncMFExpression(propertyFunc);
             DC.DPH.AddParameter(dic);
-            PreExecuteHandle(UiMethodEnum.SumAsync);
+            PreExecuteHandle(UiMethodEnum.Sum);
             return DSS.ExecuteScalar<F>();
         }
-        public Nullable<F> Sum<F>(Expression<Func<M, Nullable<F>>> propertyFunc)
+        public F? Sum<F>(Expression<Func<M, F?>> propertyFunc)
             where F : struct
         {
             DC.Action = ActionEnum.Select;
@@ -38,7 +38,41 @@ namespace HPC.DAL.Impls.ImplSyncs
             DC.Func = FuncEnum.SumNullable;
             var dic = DC.XE.FuncMFExpression(propertyFunc);
             DC.DPH.AddParameter(dic);
-            PreExecuteHandle(UiMethodEnum.SumAsync);
+            PreExecuteHandle(UiMethodEnum.Sum);
+            return DSS.ExecuteScalar<F>();
+        }
+    }
+
+    internal sealed class SumXImpl
+        : ImplerSync
+        , ISumX
+    {
+        public SumXImpl(Context dc)
+            : base(dc)
+        { }
+
+        public F Sum<F>(Expression<Func<F>> propertyFunc)
+            where F : struct
+        {
+            DC.Action = ActionEnum.Select;
+            DC.Option = OptionEnum.Column;
+            DC.Compare = CompareXEnum.None;
+            DC.Func = FuncEnum.Sum;
+            var dic = DC.XE.FuncTExpression(propertyFunc);
+            DC.DPH.AddParameter(dic);
+            PreExecuteHandle(UiMethodEnum.Sum);
+            return DSS.ExecuteScalar<F>();
+        }
+        public F? Sum<F>(Expression<Func<F?>> propertyFunc)
+            where F : struct
+        {
+            DC.Action = ActionEnum.Select;
+            DC.Option = OptionEnum.Column;
+            DC.Compare = CompareXEnum.None;
+            DC.Func = FuncEnum.SumNullable;
+            var dic = DC.XE.FuncTExpression(propertyFunc);
+            DC.DPH.AddParameter(dic);
+            PreExecuteHandle(UiMethodEnum.Sum);
             return DSS.ExecuteScalar<F>();
         }
     }

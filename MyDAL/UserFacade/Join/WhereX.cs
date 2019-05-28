@@ -6,7 +6,6 @@ using HPC.DAL.Interfaces.ISyncs;
 using HPC.DAL.Interfaces.Segments;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
@@ -24,11 +23,14 @@ namespace HPC.DAL.UserFacade.Join
         , ITopXAsync, ITopX
         , IIsExistXAsync, IIsExistX
         , ICountXAsync, ICountX
+        , ISumXAsync, ISumX
     {
 
         internal WhereX(Context dc)
             : base(dc)
         { }
+
+        /*-------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
         public OrderByX OrderBySegment
         {
@@ -37,6 +39,8 @@ namespace HPC.DAL.UserFacade.Join
                 return new OrderByX(DC);
             }
         }
+
+        /*-------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
         /// <summary>
         /// 请参阅: <see langword=".QueryOneAsync() 使用 https://www.cnblogs.com/Meng-NET/"/>
@@ -70,6 +74,8 @@ namespace HPC.DAL.UserFacade.Join
             return new QueryOneXImpl(DC).QueryOne(columnMapFunc);
         }
 
+        /*-------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+
         /// <summary>
         /// 请参阅: <see langword=".QueryListAsync() 使用 https://www.cnblogs.com/Meng-NET/"/>
         /// </summary>
@@ -101,6 +107,8 @@ namespace HPC.DAL.UserFacade.Join
         {
             return new QueryListXImpl(DC).QueryList(columnMapFunc);
         }
+
+        /*-------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
         /// <summary>
         /// 多表分页查询
@@ -142,23 +150,7 @@ namespace HPC.DAL.UserFacade.Join
             return new QueryPagingXImpl(DC).QueryPaging(pageIndex, pageSize, columnMapFunc);
         }
 
-        public async Task<int> CountAsync()
-        {
-            return await new CountXAsyncImpl(DC).CountAsync();
-        }
-        public async Task<int> CountAsync<F>(Expression<Func<F>> propertyFunc)
-        {
-            return await new CountXAsyncImpl(DC).CountAsync(propertyFunc);
-        }
-
-        public int Count()
-        {
-            return new CountXImpl(DC).Count();
-        }
-        public int Count<F>(Expression<Func<F>> propertyFunc)
-        {
-            return new CountXImpl(DC).Count(propertyFunc);
-        }
+        /*-------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
         /// <summary>
         /// 多表多条数据查询
@@ -192,6 +184,8 @@ namespace HPC.DAL.UserFacade.Join
             return new TopXImpl(DC).Top(count, columnMapFunc);
         }
 
+        /*-------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+
         /// <summary>
         /// 请参阅: <see langword=".IsExistAsync() 使用 https://www.cnblogs.com/Meng-NET/"/>
         /// </summary>
@@ -207,5 +201,50 @@ namespace HPC.DAL.UserFacade.Join
         {
             return new IsExistXImpl(DC).IsExist();
         }
+
+        /*-------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+
+        public async Task<int> CountAsync()
+        {
+            return await new CountXAsyncImpl(DC).CountAsync();
+        }
+        public async Task<int> CountAsync<F>(Expression<Func<F>> propertyFunc)
+        {
+            return await new CountXAsyncImpl(DC).CountAsync(propertyFunc);
+        }
+
+        public int Count()
+        {
+            return new CountXImpl(DC).Count();
+        }
+        public int Count<F>(Expression<Func<F>> propertyFunc)
+        {
+            return new CountXImpl(DC).Count(propertyFunc);
+        }
+
+        /*-------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+
+        public async Task<F> SumAsync<F>(Expression<Func<F>> propertyFunc)
+            where F : struct
+        {
+            return await new SumXAsyncImpl(DC).SumAsync(propertyFunc);
+        }
+        public async Task<F?> SumAsync<F>(Expression<Func<F?>> propertyFunc)
+            where F : struct
+        {
+            return await new SumXAsyncImpl(DC).SumAsync(propertyFunc);
+        }
+
+        public F Sum<F>(Expression<Func<F>> propertyFunc)
+            where F : struct
+        {
+            return new SumXImpl(DC).Sum(propertyFunc);
+        }
+        public F? Sum<F>(Expression<Func<F?>> propertyFunc)
+            where F : struct
+        {
+            return new SumXImpl(DC).Sum(propertyFunc);
+        }
+
     }
 }

@@ -6,7 +6,6 @@ using HPC.DAL.Interfaces.ISyncs;
 using HPC.DAL.Interfaces.Segments;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
@@ -31,6 +30,8 @@ namespace HPC.DAL.UserFacade.Query
             : base(dc)
         { }
 
+        /*-------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+
         public OrderByQ<M> OrderBySegment
         {
             get
@@ -38,6 +39,8 @@ namespace HPC.DAL.UserFacade.Query
                 return new OrderByQ<M>(DC);
             }
         }
+
+        /*-------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
         /// <summary>
         /// 请参阅: <see langword=".QueryOneAsync() 使用 https://www.cnblogs.com/Meng-NET/"/>
@@ -85,6 +88,8 @@ namespace HPC.DAL.UserFacade.Query
             return new QueryOneImpl<M>(DC).QueryOne<T>(columnMapFunc);
         }
 
+        /*-------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+
         /// <summary>
         /// 请参阅: <see langword=".QueryListAsync() 使用 https://www.cnblogs.com/Meng-NET/"/>
         /// </summary>
@@ -130,6 +135,8 @@ namespace HPC.DAL.UserFacade.Query
         {
             return new QueryListImpl<M>(DC).QueryList(columnMapFunc);
         }
+
+        /*-------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
         /// <summary>
         /// 单表分页查询
@@ -186,6 +193,8 @@ namespace HPC.DAL.UserFacade.Query
         {
             return new QueryPagingImpl<M>(DC).QueryPaging<T>(pageIndex, pageSize, columnMapFunc);
         }
+
+        /*-------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
         /// <summary>
         /// 单表数据查询
@@ -245,6 +254,26 @@ namespace HPC.DAL.UserFacade.Query
             return new TopImpl<M>(DC).Top<T>(count, columnMapFunc);
         }
 
+        /*-------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+
+        /// <summary>
+        /// 请参阅: <see langword=".IsExistAsync() 使用 https://www.cnblogs.com/Meng-NET/"/>
+        /// </summary>
+        public async Task<bool> IsExistAsync()
+        {
+            return await new IsExistAsyncImpl<M>(DC).IsExistAsync();
+        }
+
+        /// <summary>
+        /// 请参阅: <see langword=".IsExistAsync() 使用 https://www.cnblogs.com/Meng-NET/"/>
+        /// </summary>
+        public bool IsExist()
+        {
+            return new IsExistImpl<M>(DC).IsExist();
+        }
+
+        /*-------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+
         /// <summary>
         /// 查询符合条件数据条目数
         /// </summary>
@@ -275,6 +304,8 @@ namespace HPC.DAL.UserFacade.Query
             return new CountImpl<M>(DC).Count(propertyFunc);
         }
 
+        /*-------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+
         /// <summary>
         /// 列求和 -- select sum(col) from ...
         /// </summary>
@@ -286,7 +317,7 @@ namespace HPC.DAL.UserFacade.Query
         /// <summary>
         /// 列求和 -- select sum(col) from ...
         /// </summary>
-        public async Task<Nullable<F>> SumAsync<F>(Expression<Func<M, Nullable<F>>> propertyFunc)
+        public async Task<F?> SumAsync<F>(Expression<Func<M, F?>> propertyFunc)
             where F : struct
         {
             return await new SumAsyncImpl<M>(DC).SumAsync(propertyFunc);
@@ -303,26 +334,10 @@ namespace HPC.DAL.UserFacade.Query
         /// <summary>
         /// 列求和 -- select sum(col) from ...
         /// </summary>
-        public Nullable<F> Sum<F>(Expression<Func<M, Nullable<F>>> propertyFunc)
+        public F? Sum<F>(Expression<Func<M, F?>> propertyFunc)
             where F : struct
         {
             return new SumImpl<M>(DC).Sum(propertyFunc);
-        }
-
-        /// <summary>
-        /// 请参阅: <see langword=".IsExistAsync() 使用 https://www.cnblogs.com/Meng-NET/"/>
-        /// </summary>
-        public async Task<bool> IsExistAsync()
-        {
-            return await new IsExistAsyncImpl<M>(DC).IsExistAsync();
-        }
-
-        /// <summary>
-        /// 请参阅: <see langword=".IsExistAsync() 使用 https://www.cnblogs.com/Meng-NET/"/>
-        /// </summary>
-        public bool IsExist()
-        {
-            return new IsExistImpl<M>(DC).IsExist();
         }
 
     }
