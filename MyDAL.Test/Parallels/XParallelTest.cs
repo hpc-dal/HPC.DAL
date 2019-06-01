@@ -1,5 +1,6 @@
 ﻿using HPC.DAL;
 using HPC.DAL.ModelTools;
+using HPC.DAL.Tools;
 using MyDAL.Test.Common;
 using System;
 using System.Collections.Concurrent;
@@ -162,11 +163,11 @@ namespace MyDAL.Test.Parallels
         private ConcurrentBag<SyncState> SyncBags { get; set; }
         private SyncState Simple { get; set; }
         private List<Task> TList { get; set; }
-        private HttpAsync Remoter
+        private XHttpTest Remoter
         {
             get
             {
-                return new HttpAsync
+                return new XHttpTest
                 {
                     Token = Token,
                     URL = URL,
@@ -194,7 +195,7 @@ namespace MyDAL.Test.Parallels
             {
                 if (IsHttpFunc)
                 {
-                    return Remoter.GetRemoteData;
+                    return Remoter.HttpForTest;
                 }
                 else
                 {

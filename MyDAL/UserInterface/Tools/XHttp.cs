@@ -1,6 +1,4 @@
-﻿using HPC.DAL;
-using HPC.DAL.ModelTools;
-using System;
+﻿using System;
 using System.IO;
 using System.Net;
 using System.Net.Security;
@@ -8,9 +6,9 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 
-namespace MyDAL.Test.Parallels
+namespace HPC.DAL.Tools
 {
-    internal class HttpAsync
+    public class XHttp
     {
 
         private byte[] Buffer { get; set; }
@@ -20,11 +18,11 @@ namespace MyDAL.Test.Parallels
         private string Result { get; set; }
         private bool TimeoutFlag { get; set; }
         private int TimeoutTime { get; set; }
-        private bool RetryFlag { get; set; }
         private int RetryCount { get; set; }
         private int WaitSleep { get; set; }
         private int TrySleep { get; set; }
-        private void RemoteNew(Action<HttpAsync, string> action)
+
+        private void RemoteNew(Action<XHttp, string> action)
         {
             var reNum = 0;
             for (var i = 0; i < this.RetryCount; i++)
@@ -54,7 +52,7 @@ namespace MyDAL.Test.Parallels
                     //
                     this.Request.BeginGetResponse((arr) =>
                     {
-                        var state = arr.AsyncState as HttpAsync;
+                        var state = arr.AsyncState as XHttp;
                         var response = state.Request.EndGetResponse(arr) as HttpWebResponse;
                         var respStream = new StreamReader(response.GetResponseStream(), Encoding.GetEncoding("UTF-8"));
                         action(state, respStream.ReadToEnd());
@@ -75,7 +73,7 @@ namespace MyDAL.Test.Parallels
                 }
             }
         }
-        private void SetResult(HttpAsync state, string jsonData)
+        private void SetResult(XHttp state, string jsonData)
         {
             if (!string.IsNullOrWhiteSpace(jsonData))
             {
@@ -83,46 +81,12 @@ namespace MyDAL.Test.Parallels
                 state.ResponseFlag = true;
             }
         }
-
-        /***********************************************************************************************************************************************/
-
-        internal string URL { get; set; }
-        internal string RequestMethod { get; set; }
-        internal string JsonContent { get; set; }
-        internal string Token { get; set; }
-
-        internal HttpAsync()
-        {
-            //
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
-            ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback((object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors errors) => true);
-
-            // 
-            this.URL = string.Empty;
-            this.Request = default(HttpWebRequest);
-            this.JsonContent = string.Empty;
-            this.Buffer = default(byte[]);
-            this.RequestStream = default(Stream);
-            this.ResponseFlag = false;
-            this.Result = string.Empty;
-            this.TimeoutFlag = false;
-            this.TimeoutTime = 20 * 1000;
-            this.RetryFlag = false;
-            this.RetryCount = 3;
-            this.WaitSleep = 10;
-            this.RequestMethod = "POST";
-            this.TrySleep = 2 * 1000;
-        }
-
-        /// <summary>
-        /// 获取响应数据
-        /// </summary>
-        internal None GetRemoteData(None none)
+        private void GetRemoteDataX()
         {
             //
             if (string.IsNullOrWhiteSpace(this.URL))
             {
-                throw new Exception("HttpAsync.URL,未赋值!");
+                throw new Exception("requestURL, 未赋值 !");
             }
 
             // 
@@ -147,13 +111,76 @@ namespace MyDAL.Test.Parallels
                 }
                 Thread.Sleep(WaitSleep);
             }
-
-            //
-            return new None
-            {
-                String = Result
-            };
         }
 
+        private string RequestMethod { get; set; }
+        private string URL { get; set; }
+        private string JsonContent { get; set; }
+        private string Token { get; set; }
+
+        /***********************************************************************************************************************************************/
+
+        public XHttp()
+        {
+            //
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+            ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback((object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors errors) => true);
+
+            // 
+            this.URL = string.Empty;
+            this.Request = default(HttpWebRequest);
+            this.JsonContent = string.Empty;
+            this.Buffer = default(byte[]);
+            this.RequestStream = default(Stream);
+            this.ResponseFlag = false;
+            this.Result = string.Empty;
+            this.TimeoutFlag = false;
+            this.TimeoutTime = 20 * 1000;
+            //this.RetryFlag = false;
+            this.RetryCount = 3;
+            this.WaitSleep = 10;
+            this.RequestMethod = "POST";
+            this.TrySleep = 2 * 1000;
+        }
+
+        public string GET(string requestURL)
+        {
+            this.RequestMethod = "GET";
+            this.URL = requestURL;
+            this.GetRemoteDataX();
+            return this.Result;
+        }
+        public string GET(string requestURL, string oAuth2Token)
+        {
+            this.RequestMethod = "GET";
+            this.URL = requestURL;
+            this.Token = oAuth2Token;
+            this.GetRemoteDataX();
+            return this.Result;
+        }
+        public string POST(string requestURL)
+        {
+            this.RequestMethod = "POST";
+            this.URL = requestURL;
+            this.GetRemoteDataX();
+            return this.Result;
+        }
+        public string POST(string requestURL, string jsonRequestData)
+        {
+            this.RequestMethod = "POST";
+            this.URL = requestURL;
+            this.JsonContent = jsonRequestData;
+            this.GetRemoteDataX();
+            return this.Result;
+        }
+        public string POST(string requestURL, string jsonRequestData, string oAuth2Token)
+        {
+            this.RequestMethod = "POST";
+            this.URL = requestURL;
+            this.JsonContent = jsonRequestData;
+            this.Token = oAuth2Token;
+            this.GetRemoteDataX();
+            return this.Result;
+        }
     }
 }
